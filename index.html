@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Home Control Center</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d3f 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            transition: opacity 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: var(--primary-dark);
+        }
+
+        .button {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: white;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
+
+        .status {
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12 animate__animated animate__fadeIn">
+            <h1 class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                Smart Home Control Center
+            </h1>
+            <p class="text-gray-400">Advanced Security & Lighting Management System</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="glass-panel p-6 animate__animated animate__fadeInLeft">
+                <div class="flex items-center mb-6">
+                    <svg class="icon mr-3" viewBox="0 0 24 24">
+                        <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+                        <path d="M9 21h6"/>
+                        <path d="M12 21v-4"/>
+                    </svg>
+                    <h2 class="text-2xl font-semibold">LED Control</h2>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <button onclick="toggleManualMode()" id="modeButton" class="button w-full flex items-center justify-center">
+                            <svg class="icon mr-2" viewBox="0 0 24 24">
+                                <path d="M12 20V4"/>
+                                <path d="M5 12h14"/>
+                            </svg>
+                            Enable Manual Mode
+                        </button>
+                        <div id="modeStatus"></div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label for="brightness" class="text-gray-300">Brightness</label>
+                            <span id="brightnessValue" class="text-gray-300">50%</span>
+                        </div>
+                        <input type="range" 
+                               id="brightness" 
+                               class="slider" 
+                               min="0" 
+                               max="100" 
+                               value="50"
+                               disabled>
+                        <div id="brightnessStatus"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Door Lock Panel -->
+            <div class="glass-panel p-6 animate__animated animate__fadeInRight">
+                <div class="flex items-center mb-6">
+                    <svg class="icon mr-3" viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <h2 class="text-2xl font-semibold">Door Lock</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <input type="password" 
+                               id="passcode" 
+                               class="input-field"
+                               placeholder="Enter security passcode">
+                    </div>
+
+                    <button onclick="unlockDoor()" class="button w-full flex items-center justify-center">
+                        <svg class="icon mr-2" viewBox="0 0 24 24">
+                            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                        </svg>
+                        Unlock Door
+                    </button>
+                    <div id="doorStatus"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="mt-8 text-center text-gray-400 animate__animated animate__fadeInUp">
+            <p>System Status: <span class="text-green-400">● Online</span></p>
+            <p class="text-sm mt-2">Last Updated: <span id="lastUpdate"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // fill in the esp ip address with the actual address
+        const serverIP = 'http://<ESP IP ADDRESS>';
+        const encryptionKey = 'your-encryption-key'; // Use a secure, pre-shared key
+        let manualMode = false;
+
+        // Elements
+        const brightnessSlider = document.getElementById('brightness');
+        const brightnessValue = document.getElementById('brightnessValue');
+        const modeButton = document.getElementById('modeButton');
+        const modeStatus = document.getElementById('modeStatus');
+        const brightnessStatus = document.getElementById('brightnessStatus');
+        const passcodeInput = document.getElementById('passcode');
+        const doorStatus = document.getElementById('doorStatus');
+        const lastUpdate = document.getElementById('lastUpdate');
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            lastUpdate.textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateTimestamp, 1000);
+        updateTimestamp();
+
+        // LED Control Functions
+        async function toggleManualMode() {
+            try {
+                const response = await fetch(`${serverIP}/setManualMode`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ manualMode: !manualMode })
+                });
+
+                if (response.ok) {
+                    manualMode = !manualMode;
+                    brightnessSlider.disabled = !manualMode;
+                    modeButton.textContent = manualMode ? 'Disable Manual Mode' : 'Enable Manual Mode';
+                    showStatus(modeStatus, `Manual mode ${manualMode ? 'enabled' : 'disabled'}`, 'success');
+
+                    // Speak the appropriate message based on the manualMode status
+                    if (manualMode) {
+                        speechSynthesis.speak(new SpeechSynthesisUtterance("Manual Light Mode Activated!"));
+                    } else {
+                        speechSynthesis.speak(new SpeechSynthesisUtterance("Dynamic Light Mode is in Action!"));
+                    }
+                } else {
+                    showStatus(modeStatus, 'Failed to toggle manual mode', 'error');
+                }
+            } catch (error) {
+                showStatus(modeStatus, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function adjustBrightness(value) {
+            if (!manualMode) {
+                showStatus(brightnessStatus, 'Enable manual mode first', 'error');
+                return;
+            }
+
+            try {
+                const mappedValue = Math.floor(value * 1023 / 100);
+                
+                const response = await fetch(`${serverIP}/setBrightness`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ brightness: mappedValue })
+                });
+
+                if (response.ok) {
+                    showStatus(brightnessStatus, `Brightness set to ${value}%`, 'success');
+                } else {
+                    showStatus(brightnessStatus, 'Failed to adjust brightness', 'error');
+                }
+            } catch (error) {
+                showStatus(brightnessStatus, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Lock system for one hour
+        function lockSystem() {
+            const lockDuration = 60 * 60 * 1000; // 1 hour in milliseconds
+            const lockEndTime = Date.now() + lockDuration;
+
+            // Disable door unlocking inputs and show locked status
+            passcodeInput.disabled = true;
+            doorStatus.textContent = 'System locked due to too many invalid attempts.';
+            doorStatus.className = 'status error';
+
+            // Set timer to unlock system
+            setTimeout(() => {
+                passcodeInput.disabled = false;
+                doorStatus.textContent = '';
+                doorStatus.className = 'status';
+            }, lockDuration);
+
+        }
+
+        function encryptData(data, key) {
+            return CryptoJS.AES.encrypt(data, key).toString();
+        }
+
+        // Door Lock Functions
+        async function unlockDoor() {
+            const passcode = passcodeInput.value;
+            
+            if (!passcode) {
+                showStatus(doorStatus, 'Please enter a passcode', 'error');
+                return;
+            }
+
+            try {
+                const encryptedPasscode = encryptData(passcode, encryptionKey);
+
+                const response = await fetch(`${serverIP}/unlock`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ passcode: encryptedPasscode })
+                });
+
+                if (response.ok) {
+                    speechSynthesis.speak(new SpeechSynthesisUtterance("Door Unlocked!"));
+                    showStatus(doorStatus, 'Door unlocked successfully!', 'success');
+                    passcodeInput.value = '';
+                    setTimeout(() => {
+                        speechSynthesis.speak(new SpeechSynthesisUtterance("Closing the door."));
+                    }, 5000);  // 5000 ms = 5 seconds
+                }
+                else if (response.status === 401) {
+                    const data = await response.json()
+                    console.log(3-data.failedAttempts);
+                    showStatus(doorStatus, 'Invalid passcode!', 'error');
+                    if (3 - data.failedAttempts > 0) {
+                        speechSynthesis.speak(new SpeechSynthesisUtterance(`Invalid Password. You have ${3 - data.failedAttempts} attempts left.`));
+                    }
+                    if (3 - data.failedAttempts == 0){
+                        speechSynthesis.speak(new SpeechSynthesisUtterance("You cannot access the system for an hour. Please Contact the owner of the house!"));
+                        lockSystem();
+                    }
+                } else {
+                    showStatus(doorStatus, 'Failed to unlock door', 'error');
+                }
+            } catch (error) {
+                showStatus(doorStatus, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Utility Functions
+        function showStatus(element, message, type) {
+            element.textContent = message;
+            element.className = `status ${type}`;
+            setTimeout(() => {
+                element.textContent = '';
+                element.className = 'status';
+            }, 3000);
+        }
+
+        // Event Listeners
+        brightnessSlider.addEventListener('input', (e) => {
+            brightnessValue.textContent = `${e.target.value}%`;
+        });
+
+        brightnessSlider.addEventListener('change', (e) => {
+            adjustBrightness(e.target.value);
+        });
+
+        passcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                unlockDoor();
+            }
+        });
+
+
+    </script>
+</body>
+</html>
